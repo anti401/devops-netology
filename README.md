@@ -1,1 +1,13 @@
-# devops-netology - modified
+devops-netology
+https://github.com/github/gitignore/blob/master/Terraform.gitignore
+
+### Эффект .gitignore для Terraform:
+* Игнорируются папки .terraform на всех уровнях вложенности
+* Игнорируются файлы с расширением .tfstate, включая имеющие дополнительное расширение
+* Игнорируются лог ошибок crash.log, с учетом переименования при ротации лог-файла
+* Игнорируются файлы override.tf и override.tf.json, а также подобные с префиксами вида "any_"
+* Игнорируются файлы .terraformrc и terraform.rc
+
+Есть закомментированные опции, которые можно использовать при необходимости:
+* Сделать исключение из правил игнорирования для файла example_override.tf
+* Исключить файлы, содержащие в имени строку "tfplan"
