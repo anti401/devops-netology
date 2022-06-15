@@ -1,69 +1,67 @@
 devops-netology 
-### Домашнее задание к занятию «3.1. Работа в терминале, лекция 1»  
+### Домашнее задание к занятию «3.2. Работа в терминале, лекция 2»  
 
-#### 5. Какие ресурсы выделены виртуальной машине по-умолчанию?
-2 ядра ЦП, 1024 Мб ОЗУ
+#### 1. Какого типа команда `cd`? Попробуйте объяснить, почему она именно такого типа; опишите ход своих мыслей, если считаете что она могла бы быть другого типа.
+    vagrant@vagrant:~$ type cd
+    cd is a shell builtin
+Команда встроена в bash. Что логично, поскольку она меняет текущую директорию для командной оболочки.
 
-#### 6. Как добавить оперативной памяти или ресурсов процессора виртуальной машине?
-	config.vm.provider "virtualbox" do |v|
-		v.memory = 4096
-		v.cpus = 4
-	end
+#### 2. Какая альтернатива без pipe команде `grep <some_string> <some_file> | wc -l`?
+    grep -c <some_string> <some_file>
 
-#### 8.1 Какой переменной можно задать длину журнала history, и на какой строчке manual это описывается?
-HISTSIZE
+#### 3. Какой процесс с PID 1 является родителем для всех процессов в вашей виртуальной машине Ubuntu 20.04?
+    vagrant@vagrant:~$ pstree -p
+    systemd(1)─┬─...
 
-    HISTSIZE
-    The number of commands to remember in the command history (see HISTORY below).  
-    If the value is 0, commands are  not  saved  in the  history  list. Numeric values 
-    less than zero result in every command being saved on the history list (there is no limit). 
-    The shell sets the default value to 500 after reading any startup files.
+#### 4. Как будет выглядеть команда, которая перенаправит вывод stderr `ls` на другую сессию терминала?
+    # ввод на pts/0
+    vagrant@vagrant:~$ ls error-test 2>/dev/pts/1
+    # вывод на pts/1
+    vagrant@vagrant:~$ ls: cannot access 'error-test': No such file or directory
 
-#### 8.2 Что делает директива ignoreboth в bash?
-Значение HISTCONTROL, объединяет эффект значений `ignorespace` и `ignoredups` - не записывать в историю команды, которые начинаются с пробела, а также дублирующиеся команды.
+#### 5. Получится ли одновременно передать команде файл на stdin и вывести ее stdout в другой файл? Приведите работающий пример.
+    vagrant@vagrant:~$ grep 1 <test.file >test1.file
+Вывод всех строк содержащих `1` из файла `test.file` в файл `test1.file`.
 
-#### 9. В каких сценариях использования применимы скобки `{}` и на какой строчке man bash это описано?
-Выделение набора команд в единый блок.
+#### 6. Получится ли вывести находясь в графическом режиме данные из PTY в какой-либо из эмуляторов TTY? Сможете ли вы наблюдать выводимые данные?
+    echo test >/dev/tty1
+Должно работать что-то подобное, но подключиться посмотреть не удалось.
 
-    { list; }
-    list is simply executed in the current shell environment.
-    list must be terminated with a newline or semicolon. This is
-    known as a group command.  The return status is the exit status of list.
-    Note that unlike the metacharacters ( and ), { and } are reserved words
-    and must occur where a reserved word is permitted to be recognized.
-Выделение параметров, в том числе массивов.
+#### 7. Выполните команду `bash 5>&1`. К чему она приведет? Что будет, если вы выполните `echo netology > /proc/$$/fd/5`? Почему так происходит?
+`bash 5>&1` запустит bash c файловым дескриптором `5` и перенаправлением для него в stdout.  
+`echo netology > /proc/$$/fd/5` запишет `netology` в файловый дескриптор `5` bash ($$ - PID bash), из-за перенаправления в stdout `netology` будет выведено в терминал.
 
-    ${parameter}
-    The value of parameter is substituted.  The braces are required when parameter is a 
-    positional parameter  with  more  than  one digit,  or  when  parameter  is followed by 
-    a character which is not to be interpreted as part of its name.  The parameter is a
-    shell parameter as described above PARAMETERS) or an array reference (Arrays).
+#### 8. Получится ли в качестве входного потока для pipe использовать только stderr команды, не потеряв при этом отображение stdout на pty?
+    vagrant@vagrant:~$ ls test.file error-test 5>&2 2>&1 1>&5 | grep e
+    test.file
+    ls: cannot access 'error-test': No such file or directory
+Первая строка выводится как stdout `ls`, вторая с подсветкой как вывод `grep`.
 
-#### 10. Как создать однократным вызовом touch 100000 файлов? Получится ли аналогичным образом создать 300000?
-    vagrant@vagrant:~$ touch {1..100000}
-    # файлы создались
-    vagrant@vagrant:~$ touch {1..300000}
-    -bash: /usr/bin/touch: Argument list too long
+#### 9. Что выведет команда `cat /proc/$$/environ`? Как еще можно получить аналогичный по содержанию вывод?
+Переменные окружения. Можно вывести их командой `env`.
 
-#### 11. Что делает конструкция `[[ -d /tmp ]]`?
-Проверяет существование директории `/tmp`.
+#### 10. Используя man, опишите что доступно по адресам `/proc/<PID>/cmdline`, `/proc/<PID>/exe`.
+`/proc/<PID>/cmdline` содержит команду со всеми её аргументами, разделёнными символом \0.  
+`/proc/<PID>/exe` содержит символьную ссылку до файла запущенного процесса.
 
-    vagrant@vagrant:~$ if [[ -d /tmp ]]; then echo exist; fi
-    exist
+#### 11. Узнайте, какую наиболее старшую версию набора инструкций SSE поддерживает ваш процессор с помощью `/proc/cpuinfo`.
+    vagrant@vagrant:~$ grep -o 'sse[0-9_]*' /proc/cpuinfo
+SSE 4.2
 
-#### 12. Добейтесь в выводе type -a bash наличия первым пунктом в списке `bash is /tmp/new_path_directory/bash`
-    vagrant@vagrant:~$ mkdir /tmp/new_path_directory/
-    vagrant@vagrant:~$ touch /tmp/new_path_directory/bash
-    vagrant@vagrant:~$ chmod +x /tmp/new_path_directory/bash
-    vagrant@vagrant:~$ PATH=/tmp/new_path_directory:$PATH
-    vagrant@vagrant:~$ type -a bash
-    bash is /tmp/new_path_directory/bash
-    bash is /usr/bin/bash
-    bash is /bin/bash
+#### 12. При открытии нового окна терминала и `vagrant ssh` создается новая сессия и выделяется pty. Однако `ssh localhost 'tty'` вернёт `not a tty`. Как изменить это поведение?
+Для `ssh` есть параметр `-t`. Но пусть и без ошибки `not a tty`, соединение сразу закрывается.
 
-#### 13. Чем отличается планирование команд с помощью `batch` и `at`?
-`at` один раз запускает команду в определённое время.
-`batch` один раз запускает команду, когда нагрузка на систему опускается до определённого порога.
+    vagrant@vagrant:~$ ssh -t localhost 'tty'
+    vagrant@localhost's password:
+    /dev/pts/3
+    Connection to localhost closed.
 
-    at      executes commands at a specified time.
-    batch   executes commands when system load levels permit.
+#### 13. Бывает, что есть необходимость переместить запущенный процесс из одной сессии в другую. Попробуйте сделать это, воспользовавшись reptyr. Например, так можно перенести в screen процесс, который вы запустили по ошибке в обычной SSH-сессии.
+    ctrl+z
+    disown name_of_process
+    screen
+    reptyr $(pgrep name_of_process)
+Пока только ознакомился с инструкцией.
+
+#### 14. `sudo echo string > /root/new_file` не даст выполнить перенаправление под обычным пользователем, так как перенаправлением занимается процесс shell'а, который запущен без `sudo` под вашим пользователем. Для решения данной проблемы можно использовать конструкцию `echo string | sudo tee /root/new_file`. Узнайте что делает команда `tee` и почему в отличие от `sudo echo` команда с `sudo tee` будет работать.
+`tee` занимается непосредственно записью в файл (чего `echo` не делает), поэтому `sudo` позволяет получить права на запись.
